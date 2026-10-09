@@ -439,9 +439,10 @@ function Schools() {
           <div className="text-sm font-semibold opacity-80">For schools</div>
           <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Private, presidential and specialized schools.</h2>
           <p className="mt-5 text-lg opacity-90">Dedicated portals for school leaders and teachers, with class-level analytics and test-day tools. School accounts are issued by our team.</p>
-          <a href="mailto:schools@horizonsat.uz" className="btn mt-8 bg-white px-6 py-3 text-sky-deep hover:bg-white/90 dark:bg-sky dark:text-black">
-            Contact our schools team <ArrowRight size={16} />
-          </a>
+          <div className="mt-8 inline-flex flex-col rounded-2xl bg-white/15 px-5 py-3 backdrop-blur dark:bg-white/5">
+            <span className="text-xs font-semibold uppercase tracking-wide opacity-80">Contact our schools team</span>
+            <span className="select-all text-lg font-semibold">schools@horizonsat.uz</span>
+          </div>
         </Reveal>
         <Reveal delay={0.15} className="grid grid-cols-2 gap-4">
           {[

@@ -12,6 +12,8 @@ export default function Admin() {
   const nav = useNavigate()
   const [creating, setCreating] = useState(false)
   const [tab, setTab] = useState<'all' | 'b2b' | 'b2g' | 'student'>('all')
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const users = s.users.filter((u) => u.role !== 'admin' && (tab === 'all' || u.role === tab))
   const counts = {
     student: s.users.filter((u) => u.role === 'student').length,
@@ -40,7 +42,17 @@ export default function Admin() {
             <p className="mt-1 text-muted">Create login credentials for private (B2B) and government (B2G) schools.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { if (confirm('Reset all demo data to its original state?')) { resetDemo(); nav('/login') } }} className="btn-outline"><RotateCcw size={16} /> Reset demo</button>
+            <button
+              onClick={() => {
+                if (!confirmReset) return setConfirmReset(true)
+                resetDemo()
+                nav('/login')
+              }}
+              onBlur={() => setConfirmReset(false)}
+              className={confirmReset ? 'btn bg-bad text-white hover:bg-bad/90' : 'btn-outline'}
+            >
+              <RotateCcw size={16} /> {confirmReset ? 'Click again to reset' : 'Reset demo'}
+            </button>
             <button onClick={() => setCreating(true)} className="btn-primary"><Plus size={16} /> New school account</button>
           </div>
         </div>
@@ -83,9 +95,15 @@ export default function Admin() {
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     {u.role !== 'student' && (
-                      <button onClick={() => confirm(`Delete ${u.org ?? u.name}?`) && adminDelete(u.id)} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-bad/10 hover:text-bad" aria-label="Delete account">
-                        <Trash2 size={15} />
-                      </button>
+                      confirmDelete === u.id ? (
+                        <button onClick={() => adminDelete(u.id)} onBlur={() => setConfirmDelete(null)} className="chip bg-bad text-white" autoFocus>
+                          Confirm delete
+                        </button>
+                      ) : (
+                        <button onClick={() => setConfirmDelete(u.id)} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-bad/10 hover:text-bad" aria-label={`Delete ${u.org ?? u.name}`}>
+                          <Trash2 size={15} />
+                        </button>
+                      )
                     )}
                   </td>
                 </tr>

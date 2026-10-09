@@ -12,7 +12,8 @@
     <script>
       // Apply the saved or system theme before first paint to avoid a flash.
       try {
-        var t = localStorage.getItem('hz_theme');
+        var host = document.documentElement.getAttribute('data-theme');
+        var t = host || localStorage.getItem('hz_theme');
         var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (dark) document.documentElement.classList.add('dark');
       } catch (e) {}
