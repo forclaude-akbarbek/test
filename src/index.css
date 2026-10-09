@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light: white + sky blue. Dark: black + sky blue. Values are RGB triplets for Tailwind alpha support. */
+:root {
+  --bg: 255 255 255;
+  --surface: 245 247 250;
+  --elevated: 255 255 255;
+  --ink: 17 24 39;
+  --muted: 100 110 125;
+  --line: 226 230 236;
+  --sky: 14 165 233;
+  --sky-soft: 224 242 254;
+  --sky-deep: 2 132 199;
+  --good: 22 163 74;
+  --bad: 220 38 38;
+  --warn: 217 119 6;
+  /* Chart series (validated for CVD separation and contrast) */
+  --viz-1: #0284c7;
+  --viz-2: #eb6834;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 0 0 0;
+  --surface: 14 15 18;
+  --elevated: 24 25 30;
+  --ink: 245 246 248;
+  --muted: 150 156 168;
+  --line: 44 46 54;
+  --sky: 56 189 248;
+  --sky-soft: 8 47 73;
+  --sky-deep: 125 211 252;
+  --good: 74 222 128;
+  --bad: 248 113 113;
+  --warn: 251 191 36;
+  --viz-1: #1a8fd6;
+  --viz-2: #d95926;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, 'Helvetica Neue', Arial, sans-serif;
+}
+
+::selection {
+  background: rgb(var(--sky) / 0.25);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-sky text-white hover:bg-sky-deep dark:text-black dark:hover:bg-sky-deep;
+  }
+  .btn-ghost {
+    @apply btn text-ink hover:bg-ink/5;
+  }
+  .btn-outline {
+    @apply btn border border-line text-ink hover:border-sky hover:text-sky;
+  }
+  .card {
+    @apply rounded-3xl border border-line bg-elevated;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-elevated px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-sky focus:ring-4 focus:ring-sky/15;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+  .glass {
+    @apply border-b border-line/60 bg-bg/70 backdrop-blur-xl backdrop-saturate-150;
+  }
+}
+
+/* Highlighter marks inside exam passages */
+mark.hl {
+  background: #fde68a;
+  color: inherit;
+  border-radius: 2px;
+}
+.dark mark.hl {
+  background: #a16207;
+}
+
+.katex {
+  font-size: 1.05em;
+}
+
+/* Thin scrollbars for panes */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
