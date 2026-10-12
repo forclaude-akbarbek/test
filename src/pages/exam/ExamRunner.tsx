@@ -510,7 +510,9 @@ function QuestionPane({ q, cur, update, highlighting, elimMode, setElimMode }: {
     })
   const split = !!q.passage || q.type === 'spr'
   const scrollRef = useRef<HTMLDivElement>(null)
-  useEffect(() => scrollRef.current?.scrollTo(0, 0), [q.id])
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0)
+  }, [q.id])
 
   const head = (
     <div className="mb-4 flex items-center justify-between border-b-2 border-dashed border-line bg-ink/[0.04] pr-2">

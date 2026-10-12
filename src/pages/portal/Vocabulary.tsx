@@ -13,7 +13,9 @@ export default function Vocabulary() {
   const u = usage(user, data)
   const [mode, setMode] = useState<Mode>({ kind: 'home' })
   const [today, setToday] = useState<string[]>([])
-  useEffect(() => setToday(ensureDailyWords(u.dailyWords)), [u.dailyWords])
+  useEffect(() => {
+    setToday(ensureDailyWords(u.dailyWords))
+  }, [u.dailyWords])
   const mastered = new Set(data.vocab.mastered)
 
   if (mode.kind === 'cards') return <Flashcards words={mode.words} title={mode.title} onBack={() => setMode({ kind: 'home' })} />

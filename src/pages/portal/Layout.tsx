@@ -82,7 +82,9 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
 export default function PortalLayout() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
-  useEffect(() => touchActivity(), [])
+  useEffect(() => {
+    touchActivity()
+  }, [])
   const current = pathname === '/app/settings' ? { label: 'Settings' } : SECTIONS.find((s) => (s.end ? pathname === s.to : pathname.startsWith(s.to)))
   return (
     <div className="min-h-screen bg-surface">

@@ -22,7 +22,9 @@ export default function Dashboard() {
   const weak = weakestSkills(skillStats(data), 4)
   const recent = fullAttempts(data).slice(-3).reverse()
   const [words, setWords] = useState<string[]>([])
-  useEffect(() => setWords(ensureDailyWords(u.dailyWords)), [u.dailyWords])
+  useEffect(() => {
+    setWords(ensureDailyWords(u.dailyWords))
+  }, [u.dailyWords])
 
   const tiles = [
     { icon: Target, label: 'Target score', value: user?.targetScore ?? '—', note: predicted ? `${Math.max(0, (user?.targetScore ?? 0) - predicted)} points to go` : 'Take a mock to begin' },
