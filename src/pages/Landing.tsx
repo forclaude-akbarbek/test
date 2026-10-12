@@ -307,14 +307,14 @@ function ExamShowcase() {
     { icon: ShieldCheck, t: 'Autosave', d: 'Every answer is saved the moment you click.' },
   ]
   return (
-    <section id="exam" ref={ref} className="bg-neutral-950 py-28 text-white">
+    <section id="exam" ref={ref} className="bg-surface py-28 text-ink">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <Reveal className="mx-auto max-w-3xl text-center">
           <div className="text-sm font-semibold text-sky">The exam experience</div>
           <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-6xl">So familiar, test day feels like practice.</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-neutral-400">Every button, panel and timer is where students expect it to be on the real Digital SAT.</p>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-muted">Every button, panel and timer is where students expect it to be on the real Digital SAT.</p>
         </Reveal>
-        <motion.div style={{ scale, borderRadius: radius }} className="mx-auto mt-16 aspect-[16/10] max-w-5xl overflow-hidden border border-white/10 shadow-[0_40px_120px_-20px_rgba(14,165,233,0.35)]">
+        <motion.div style={{ scale, borderRadius: radius }} className="mx-auto mt-16 aspect-[16/10] max-w-5xl overflow-hidden border border-line shadow-[0_40px_120px_-20px_rgba(14,165,233,0.35)]">
           <ExamMock />
         </motion.div>
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -322,7 +322,7 @@ function ExamShowcase() {
             <Reveal key={t.t} delay={i * 0.08}>
               <t.icon className="text-sky" size={26} />
               <div className="mt-3 font-semibold">{t.t}</div>
-              <div className="mt-1 text-sm text-neutral-400">{t.d}</div>
+              <div className="mt-1 text-sm text-muted">{t.d}</div>
             </Reveal>
           ))}
         </div>
