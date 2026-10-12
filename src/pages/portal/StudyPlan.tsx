@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Brain, Check, Lock, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -98,7 +98,7 @@ export default function StudyPlan() {
         }
       />
 
-      <AnimatePresence mode="wait">
+      <>
         {generating ? (
           <motion.div key="gen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card mx-auto max-w-lg p-10 text-center">
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }} className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-gradient-to-tr from-sky to-sky-deep text-white">
@@ -148,7 +148,7 @@ export default function StudyPlan() {
         ) : plan ? (
           <PlanView key="plan" plan={plan} />
         ) : null}
-      </AnimatePresence>
+      </>
     </div>
   )
 }

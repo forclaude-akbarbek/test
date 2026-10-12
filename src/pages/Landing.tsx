@@ -255,7 +255,7 @@ function Story() {
         <div className="hidden md:block">
           <div className="sticky top-28 h-[440px]">
             <div className="relative h-full rounded-[28px] border border-line bg-surface p-5 shadow-soft">
-              <AnimatePresence mode="wait">
+              <>
                 <motion.div
                   key={active}
                   initial={{ opacity: 0, scale: 0.96, y: 16 }}
@@ -266,7 +266,7 @@ function Story() {
                 >
                   {STORY[active].visual}
                 </motion.div>
-              </AnimatePresence>
+              </>
             </div>
           </div>
         </div>
@@ -405,11 +405,11 @@ function Pricing() {
               <div className="absolute right-6 top-6 chip bg-sky text-white dark:text-black">Most popular</div>
               <div className="text-lg font-semibold">Premium</div>
               <div className="mt-3 text-5xl font-bold tracking-tight">
-                <AnimatePresence mode="wait">
+                <>
                   <motion.span key={price} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="inline-block">
                     {price.toLocaleString('en-US')}
                   </motion.span>
-                </AnimatePresence>{' '}
+                </>{' '}
                 <span className="text-lg font-medium text-muted">UZS</span>
               </div>
               <div className="mt-1 text-sm text-muted">per {yearly ? 'year' : 'month'}</div>

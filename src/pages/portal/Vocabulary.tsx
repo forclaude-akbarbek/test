@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowLeft, Check, RotateCcw, Shuffle, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { WORDS, WORD_LISTS, wordByName, type Word } from '../../data/vocab'
@@ -205,7 +205,7 @@ function Quiz({ words, title, onBack }: { words: Word[]; title: string; onBack: 
       <button onClick={onBack} className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={15} /> Vocabulary</button>
       <h1 className="mb-6 text-2xl font-bold tracking-tight">{title} · Quiz</h1>
       {i < questions.length ? (
-        <AnimatePresence mode="wait">
+        <>
           <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="card p-6">
             <div className="text-sm text-muted">Question {i + 1} of {questions.length}</div>
             <div className="mt-3 text-lg font-semibold">Which word means: "{cur.w.def}"?</div>
@@ -229,7 +229,7 @@ function Quiz({ words, title, onBack }: { words: Word[]; title: string; onBack: 
               </div>
             )}
           </motion.div>
-        </AnimatePresence>
+        </>
       ) : (
         <Done text={`You scored ${score} out of ${questions.length}.`} onAgain={() => { setI(0); setScore(0); setPicked(null) }} onBack={onBack} />
       )}

@@ -28,6 +28,7 @@ import NetworkLayout from './pages/network/NetworkLayout'
 import NetworkOverview from './pages/network/Overview'
 import { MockDays, NetworkReports, NetworkSettings, RegionDetail, Regions, SchoolView, Schools, Talent } from './pages/network/Pages'
 import { homePath, useSession } from './lib/store'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import type { Role } from './lib/types'
 
 function RequireRole({ roles, children }: { roles: Role[]; children: React.ReactNode }) {
@@ -56,8 +57,9 @@ const schoolPages = (
 )
 
 export default function App() {
+  const { pathname } = useLocation()
   return (
-    <>
+    <ErrorBoundary resetKey={pathname}>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -108,6 +110,6 @@ export default function App() {
         <Route path="/b2g" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   )
 }
