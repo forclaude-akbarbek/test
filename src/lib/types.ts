@@ -19,7 +19,64 @@ export interface Question {
   explanation: string
 }
 
-export type Role = 'student' | 'b2b' | 'b2g' | 'admin'
+export type Role = 'student' | 'teacher' | 'b2b' | 'b2g' | 'admin'
+
+/** private = B2B school, government = B2G school, network = B2G body overseeing many government schools */
+export type OrgKind = 'private' | 'government' | 'network'
+
+export interface Org {
+  id: string
+  name: string
+  kind: OrgKind
+  tier?: 'presidential' | 'specialized' | 'private' | 'network'
+  region: string
+  city: string
+  parentId?: string
+  seats: number
+  licenseUntil: string
+  createdAt: string
+  /** How many fabricated demo students the school has, generated deterministically from `seed`. */
+  generated: number
+  seed: number
+  /** Ability baseline for fabricated students (0–1). */
+  level: number
+}
+
+export interface SchoolClass {
+  id: string
+  orgId: string
+  name: string
+  grade: string
+  teacherId?: string
+}
+
+export interface Teacher {
+  id: string
+  orgId: string
+  name: string
+  email: string
+  subject: 'Reading and Writing' | 'Math'
+  userId?: string
+}
+
+export type AssignmentType = 'mock' | 'section' | 'quick' | 'vocab'
+
+export interface Assignment {
+  id: string
+  /** School or network that created it. Network assignments reach every school in the network. */
+  orgId: string
+  /** Empty = everyone in the school (or every school in the network). */
+  classIds: string[]
+  title: string
+  type: AssignmentType
+  testId?: string
+  section?: 'rw' | 'math'
+  skill?: string
+  list?: string
+  due: string
+  createdAt: string
+  createdBy: string
+}
 
 export interface User {
   id: string
@@ -34,6 +91,14 @@ export interface User {
   plan: 'free' | 'premium'
   active: boolean
   createdAt: string
+  orgId?: string
+  classId?: string
+  teacherId?: string
+  /** School-issued accounts must set their own password on first sign-in. */
+  mustChangePassword?: boolean
+  failedLogins?: number
+  lockedUntil?: string
+  lastLogin?: string
 }
 
 export interface ResponseRecord {

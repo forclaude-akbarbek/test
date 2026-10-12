@@ -1,25 +1,34 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Building2, Landmark, LogOut, Plus, RotateCcw, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
+import { Building2, KeyRound, Landmark, LogOut, Network, Plus, RotateCcw, Search, Trash2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { IssuedLogins, Modal, Segmented, Stat } from '../components/ui'
+import { REGIONS } from '../data/schools'
 import { fmtDate } from '../lib/analytics'
-import { adminCreateAccount, adminDelete, adminSetActive, logout, resetDemo, useAppState } from '../lib/store'
+import { adminCreateOrg, adminDelete, adminSetActive, logout, resetDemo, resetUserPassword, seatsUsed, useAppState, type IssuedLogin } from '../lib/store'
+import type { Org, Role } from '../lib/types'
+
+const ROLE_LABEL: Record<Role, string> = { student: 'Student', teacher: 'Teacher', b2b: 'School (B2B)', b2g: 'Government (B2G)', admin: 'Admin' }
 
 export default function Admin() {
   const s = useAppState()
   const nav = useNavigate()
+  const [tab, setTab] = useState<'orgs' | 'users'>('orgs')
   const [creating, setCreating] = useState(false)
-  const [tab, setTab] = useState<'all' | 'b2b' | 'b2g' | 'student'>('all')
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const users = s.users.filter((u) => u.role !== 'admin' && (tab === 'all' || u.role === tab))
-  const counts = {
-    student: s.users.filter((u) => u.role === 'student').length,
-    b2b: s.users.filter((u) => u.role === 'b2b').length,
-    b2g: s.users.filter((u) => u.role === 'b2g').length,
-  }
+  const [issued, setIssued] = useState<IssuedLogin | null>(null)
+  const [q, setQ] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'all' | Role>('all')
+  const orgName = (id?: string) => s.orgs.find((o) => o.id === id)?.name
+
+  const users = useMemo(
+    () => s.users.filter((u) => u.role !== 'admin' && (roleFilter === 'all' || u.role === roleFilter) && (!q || `${u.name} ${u.email} ${orgName(u.orgId) ?? ''}`.toLowerCase().includes(q.toLowerCase()))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [s.users, roleFilter, q],
+  )
+  const orgs = [...s.orgs].sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'network' ? -1 : b.kind === 'network' ? 1 : a.kind === 'private' ? -1 : 1))
 
   return (
     <div className="min-h-screen bg-surface">
@@ -38,10 +47,10 @@ export default function Admin() {
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Accounts</h1>
-            <p className="mt-1 text-muted">Create login credentials for private (B2B) and government (B2G) schools.</p>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Platform administration</h1>
+            <p className="mt-1 text-muted">Create school and government accounts, manage logins and licences.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {
                 if (!confirmReset) return setConfirmReset(true)
@@ -53,126 +62,204 @@ export default function Admin() {
             >
               <RotateCcw size={16} /> {confirmReset ? 'Click again to reset' : 'Reset demo'}
             </button>
-            <button onClick={() => setCreating(true)} className="btn-primary"><Plus size={16} /> New school account</button>
+            <button onClick={() => setCreating(true)} className="btn-primary"><Plus size={16} /> New organization</button>
           </div>
         </div>
-        <div className="mb-6 grid grid-cols-3 gap-4">
-          {[['Students', counts.student], ['Private schools', counts.b2b], ['Government schools', counts.b2g]].map(([k, v]) => (
-            <div key={k} className="card p-5">
-              <div className="text-sm text-muted">{k}</div>
-              <div className="text-3xl font-bold tabular-nums">{v}</div>
-            </div>
-          ))}
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Stat label="Private schools" value={s.orgs.filter((o) => o.kind === 'private').length} />
+          <Stat label="Government schools" value={s.orgs.filter((o) => o.kind === 'government').length} note={`${s.orgs.filter((o) => o.kind === 'network').length} network`} />
+          <Stat label="Licensed seats" value={s.orgs.filter((o) => o.kind !== 'network').reduce((n, o) => n + o.seats, 0).toLocaleString('en-US')} />
+          <Stat label="Login accounts" value={s.users.length} />
         </div>
-        <div className="mb-4 inline-flex rounded-full border border-line bg-elevated p-1 text-sm">
-          {(['all', 'b2b', 'b2g', 'student'] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 font-medium transition ${tab === t ? 'bg-sky text-white dark:text-black' : 'text-muted'}`}>
-              {t === 'all' ? 'All' : t === 'student' ? 'Students' : t.toUpperCase()}
-            </button>
-          ))}
+        <div className="mb-4">
+          <Segmented value={tab} onChange={setTab} options={[{ value: 'orgs', label: 'Organizations' }, { value: 'users', label: 'Logins' }]} />
         </div>
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="border-b border-line bg-ink/[0.03] text-left text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Name</th>
-                <th className="px-5 py-3 font-semibold">Type</th>
-                <th className="px-5 py-3 font-semibold">Login</th>
-                <th className="px-5 py-3 font-semibold">Created</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-5 py-3.5 font-medium">{u.org ?? u.name}</td>
-                  <td className="px-5 py-3.5"><span className="chip bg-ink/5 text-muted">{u.role === 'student' ? 'Student' : u.role.toUpperCase()}</span></td>
-                  <td className="px-5 py-3.5 text-muted">{u.email}</td>
-                  <td className="px-5 py-3.5 text-muted">{fmtDate(u.createdAt)}</td>
-                  <td className="px-5 py-3.5">
-                    <button onClick={() => adminSetActive(u.id, !u.active)} className={`chip ${u.active ? 'bg-good/15 text-good' : 'bg-ink/5 text-muted'}`}>{u.active ? 'Active' : 'Disabled'}</button>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    {u.role !== 'student' && (
-                      confirmDelete === u.id ? (
-                        <button onClick={() => adminDelete(u.id)} onBlur={() => setConfirmDelete(null)} className="chip bg-bad text-white" autoFocus>
-                          Confirm delete
-                        </button>
-                      ) : (
-                        <button onClick={() => setConfirmDelete(u.id)} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-bad/10 hover:text-bad" aria-label={`Delete ${u.org ?? u.name}`}>
-                          <Trash2 size={15} />
-                        </button>
-                      )
-                    )}
-                  </td>
+
+        {tab === 'orgs' ? (
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="border-b border-line bg-ink/[0.03] text-left text-xs uppercase tracking-wide text-muted">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Organization</th>
+                  <th className="px-3 py-3 font-semibold">Type</th>
+                  <th className="px-3 py-3 font-semibold">Region</th>
+                  <th className="px-3 py-3 text-right font-semibold">Seats used</th>
+                  <th className="px-3 py-3 font-semibold">Licence until</th>
+                  <th className="px-5 py-3 text-right font-semibold">Logins</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {orgs.map((o) => (
+                  <tr key={o.id}>
+                    <td className="px-5 py-3">
+                      <div className="font-medium">{o.name}</div>
+                      {o.parentId && <div className="text-xs text-muted">{orgName(o.parentId)}</div>}
+                    </td>
+                    <td className="px-3 py-3"><span className="chip bg-ink/5 text-muted">{o.kind === 'private' ? 'Private (B2B)' : o.kind === 'government' ? 'Government (B2G)' : 'Network (B2G)'}</span></td>
+                    <td className="px-3 py-3 text-muted">{o.region}</td>
+                    <td className="px-3 py-3 text-right tabular-nums">{o.kind === 'network' ? '—' : `${seatsUsed(o.id, s)} / ${o.seats}`}</td>
+                    <td className="px-3 py-3 text-muted">{fmtDate(o.licenseUntil)}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{s.users.filter((u) => u.orgId === o.id).length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                <input className="input pl-10" placeholder="Search by name, email or organization" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search logins" />
+              </div>
+              <select className="input sm:w-52" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as 'all' | Role)} aria-label="Account type">
+                <option value="all">All account types</option>
+                {(['student', 'teacher', 'b2b', 'b2g'] as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+              </select>
+            </div>
+            <div className="card overflow-x-auto">
+              <table className="w-full min-w-[820px] text-sm">
+                <thead className="border-b border-line bg-ink/[0.03] text-left text-xs uppercase tracking-wide text-muted">
+                  <tr>
+                    <th className="px-5 py-3 font-semibold">Name</th>
+                    <th className="px-3 py-3 font-semibold">Type</th>
+                    <th className="px-3 py-3 font-semibold">Organization</th>
+                    <th className="px-3 py-3 font-semibold">Last sign-in</th>
+                    <th className="px-3 py-3 font-semibold">Status</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {users.map((u) => (
+                    <tr key={u.id}>
+                      <td className="px-5 py-3">
+                        <div className="font-medium">{u.name}</div>
+                        <div className="text-xs text-muted">{u.email}</div>
+                      </td>
+                      <td className="px-3 py-3"><span className="chip bg-ink/5 text-muted">{ROLE_LABEL[u.role]}</span></td>
+                      <td className="px-3 py-3 text-muted">{orgName(u.orgId) ?? 'Independent'}</td>
+                      <td className="px-3 py-3 text-muted">{u.lastLogin ? fmtDate(u.lastLogin) : 'Never'}</td>
+                      <td className="px-3 py-3">
+                        <button onClick={() => adminSetActive(u.id, !u.active)} className={`chip ${u.active ? 'bg-good/15 text-good' : 'bg-ink/5 text-muted'}`} title={u.active ? 'Click to disable' : 'Click to enable'}>
+                          {u.active ? 'Active' : 'Disabled'}
+                        </button>
+                        {u.mustChangePassword && <span className="ml-1 chip bg-warn/15 text-warn">Temp password</span>}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button onClick={() => setIssued(resetUserPassword(u.id))} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-ink/5 hover:text-ink" title="Reset password" aria-label={`Reset password for ${u.name}`}>
+                            <KeyRound size={15} />
+                          </button>
+                          {confirmDelete === u.id ? (
+                            <button onClick={() => adminDelete(u.id)} onBlur={() => setConfirmDelete(null)} className="chip bg-bad text-white" autoFocus>Confirm delete</button>
+                          ) : (
+                            <button onClick={() => setConfirmDelete(u.id)} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-bad/10 hover:text-bad" title="Delete login" aria-label={`Delete ${u.name}`}>
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </main>
-      <AnimatePresence>{creating && <CreateModal onClose={() => setCreating(false)} />}</AnimatePresence>
+      {creating && <CreateOrg onClose={() => setCreating(false)} />}
+      <Modal open={!!issued} onClose={() => setIssued(null)} title="New temporary password" wide>
+        {issued && <IssuedLogins logins={[issued]} filename="login.csv" />}
+      </Modal>
     </div>
   )
 }
 
-function CreateModal({ onClose }: { onClose: () => void }) {
-  const [f, setF] = useState({ role: 'b2b' as 'b2b' | 'b2g', org: '', email: '', password: Math.random().toString(36).slice(2, 10) })
+function CreateOrg({ onClose }: { onClose: () => void }) {
+  const s = useAppState()
+  const networks = s.orgs.filter((o) => o.kind === 'network')
+  const [f, setF] = useState({ kind: 'private' as Org['kind'], name: '', region: 'Tashkent City', city: '', seats: 150, parentId: networks[0]?.id ?? '', contactName: '', email: '' })
   const [err, setErr] = useState('')
-  const [done, setDone] = useState(false)
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const r = adminCreateAccount(f)
-    if (!r.ok) return setErr(r.error)
-    setDone(true)
-  }
+  const [login, setLogin] = useState<IssuedLogin | null>(null)
+  const types = [
+    { k: 'private' as const, l: 'Private school', d: 'B2B', icon: Building2 },
+    { k: 'government' as const, l: 'Government school', d: 'B2G', icon: Landmark },
+    { k: 'network' as const, l: 'Government network', d: 'B2G, many schools', icon: Network },
+  ]
   return (
-    <>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed inset-x-4 top-[8vh] z-50 mx-auto max-w-md rounded-3xl bg-elevated p-7 shadow-lift" role="dialog" aria-label="New school account">
-        <button onClick={onClose} className="absolute right-5 top-5 grid h-8 w-8 place-items-center rounded-full hover:bg-ink/5" aria-label="Close"><X size={18} /></button>
-        {done ? (
-          <div>
-            <div className="text-2xl font-bold tracking-tight">Account created</div>
-            <p className="mt-1 text-sm text-muted">Share these credentials with the school. They will be sent to the {f.role === 'b2b' ? 'private' : 'government'} school portal on login.</p>
-            <div className="mt-5 space-y-2 rounded-2xl bg-ink/[0.04] p-4 font-mono text-sm">
-              <div>Login: {f.email}</div>
-              <div>Password: {f.password}</div>
-            </div>
-            <button onClick={onClose} className="btn-primary mt-6 w-full">Done</button>
+    <Modal open onClose={onClose} title={login ? 'Organization created' : 'New organization'} wide>
+      {login ? (
+        <>
+          <p className="mb-4 text-sm text-muted">
+            <b className="text-ink">{f.name}</b> is ready. Share the administrator's sign-in details below. On first sign-in they'll set their own password and land in their {f.kind === 'network' ? 'network' : 'school'} portal.
+          </p>
+          <IssuedLogins logins={[login]} filename={`${f.name} login.csv`} />
+          <button onClick={onClose} className="btn-primary mt-6 w-full">Done</button>
+        </>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            const r = adminCreateOrg({ ...f, seats: Number(f.seats) })
+            if (!r.ok) return setErr(r.error)
+            setLogin(r.login)
+          }}
+          className="space-y-4"
+        >
+          <div className="grid gap-2 sm:grid-cols-3">
+            {types.map((t) => (
+              <button type="button" key={t.k} onClick={() => setF({ ...f, kind: t.k })} className={`rounded-2xl border-2 p-4 text-left transition ${f.kind === t.k ? 'border-sky' : 'border-line'}`} aria-pressed={f.kind === t.k}>
+                <t.icon size={20} className="text-sky" />
+                <div className="mt-2 text-sm font-semibold">{t.l}</div>
+                <div className="text-xs text-muted">{t.d}</div>
+              </button>
+            ))}
           </div>
-        ) : (
-          <form onSubmit={submit}>
-            <div className="text-2xl font-bold tracking-tight">New school account</div>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {([['b2b', 'Private school', Building2], ['b2g', 'Government school', Landmark]] as const).map(([r, l, Icon]) => (
-                <button type="button" key={r} onClick={() => setF({ ...f, role: r })} className={`rounded-2xl border-2 p-4 text-left transition ${f.role === r ? 'border-sky' : 'border-line'}`}>
-                  <Icon size={20} className="text-sky" />
-                  <div className="mt-2 text-sm font-semibold">{l}</div>
-                  <div className="text-xs text-muted">{r.toUpperCase()}</div>
-                </button>
-              ))}
+          <div>
+            <label className="label" htmlFor="o-name">Name</label>
+            <input id="o-name" className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={f.kind === 'private' ? 'e.g. Silk Road International School' : f.kind === 'government' ? 'e.g. Bukhara Specialized School No. 3' : 'e.g. Creative Schools Programme'} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="label" htmlFor="o-region">Region</label>
+              <select id="o-region" className="input" value={f.region} onChange={(e) => setF({ ...f, region: e.target.value, city: REGIONS.find((r) => r.name === e.target.value)?.city ?? '' })}>
+                {REGIONS.map((r) => <option key={r.name}>{r.name}</option>)}
+              </select>
             </div>
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="label" htmlFor="org">School name</label>
-                <input id="org" className="input" required value={f.org} onChange={(e) => setF({ ...f, org: e.target.value })} placeholder={f.role === 'b2b' ? 'e.g. Silk Road International School' : 'e.g. Specialized School No. 1, Bukhara'} />
-              </div>
-              <div>
-                <label className="label" htmlFor="login">Login email</label>
-                <input id="login" type="email" className="input" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="director@school.uz" />
-              </div>
-              <div>
-                <label className="label" htmlFor="pw">Password</label>
-                <input id="pw" className="input font-mono" required minLength={6} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
-              </div>
+            <div>
+              <label className="label" htmlFor="o-city">City</label>
+              <input id="o-city" className="input" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder={REGIONS.find((r) => r.name === f.region)?.city} />
             </div>
-            {err && <div className="mt-3 rounded-xl bg-bad/10 px-4 py-2.5 text-sm text-bad">{err}</div>}
-            <button className="btn-primary mt-6 w-full py-3">Create account</button>
-          </form>
-        )}
-      </motion.div>
-    </>
+            {f.kind !== 'network' && (
+              <div>
+                <label className="label" htmlFor="o-seats">Student seats</label>
+                <input id="o-seats" type="number" min={1} className="input" value={f.seats} onChange={(e) => setF({ ...f, seats: Number(e.target.value) })} />
+              </div>
+            )}
+          </div>
+          {f.kind === 'government' && (
+            <div>
+              <label className="label" htmlFor="o-parent">Network</label>
+              <select id="o-parent" className="input" value={f.parentId} onChange={(e) => setF({ ...f, parentId: e.target.value })}>
+                <option value="">Not part of a network</option>
+                {networks.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="o-contact">Administrator's name</label>
+              <input id="o-contact" className="input" required value={f.contactName} onChange={(e) => setF({ ...f, contactName: e.target.value })} />
+            </div>
+            <div>
+              <label className="label" htmlFor="o-email">Administrator's email (login)</label>
+              <input id="o-email" type="email" className="input" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="director@school.uz" />
+            </div>
+          </div>
+          {err && <div className="rounded-xl bg-bad/10 px-4 py-3 text-sm text-bad">{err}</div>}
+          <button className="btn-primary w-full py-3">Create organization and login</button>
+        </form>
+      )}
+    </Modal>
   )
 }

@@ -41,6 +41,7 @@ export function LineChart({
     const n = 4
     return Array.from({ length: n + 1 }, (_, i) => Math.round(lo + ((hi - lo) * i) / n))
   }, [lo, hi])
+  if (!all.length) return <div className="grid place-items-center rounded-2xl bg-ink/[0.03] text-sm text-muted" style={{ height: height * 0.75 }}>No exam results yet</div>
 
   // Direct labels at each series' last point, nudged apart so they never overlap.
   const endLabels = series

@@ -9,20 +9,31 @@ The login page has one-click "Demo access" buttons. Credentials:
 
 | Account | Email | Password | Lands on |
 |---|---|---|---|
-| Student (B2C) | student@horizonsat.uz | demo1234 | Student portal (8 sections) |
-| Private school (B2B) | school@horizonsat.uz | school1234 | B2B portal placeholder |
-| Government school (B2G) | gov@horizonsat.uz | gov1234 | B2G portal placeholder |
-| Admin | admin@horizonsat.uz | admin1234 | Admin panel (create B2B/B2G accounts) |
+| Student (independent, Free plan) | student@horizonsat.uz | demo1234 | Student portal |
+| School student (Registan, 11-A) | jasur@horizonsat.uz | jasur1234 | Student portal with school assignments |
+| Teacher (Registan) | teacher@horizonsat.uz | teacher1234 | School portal, own classes only |
+| Private school director (B2B) | school@horizonsat.uz | school1234 | School portal |
+| Government school (B2G) | gov.school@horizonsat.uz | govschool1234 | School portal (part of the network) |
+| Government network (B2G) | gov@horizonsat.uz | gov1234 | Network portal |
+| Admin | admin@horizonsat.uz | admin1234 | Admin panel |
 
-Students can also sign up. B2B/B2G accounts can only be created by the admin. **Admin → Reset demo** restores the original data before a presentation.
+Accounts created inside the demo (students, teachers, schools) get a temporary password and must set their own on first sign-in.
+Five wrong passwords pause sign-in for 60 seconds. **Admin → Reset demo** restores the original data before a presentation.
 
 ## What's included
 
 - **Landing page** — Apple-style, animated, light/dark mode.
-- **Student portal** — Dashboard, Practice, Study Plan, Results, Analytics, Question Bank, Vocabulary, Subscription.
-- **Bluebook-style exam** — 2 adaptive modules per section, timer (hide/show), question navigator, mark for review, answer eliminator, highlighter, reference sheet, Desmos calculator, grid-in answers, break screen, autosave/resume, check-your-work page.
-- **Free plan limits** — 1 full exam and 1 AI study plan per month, 5 new words per day; Premium (simulated Payme/Click/Uzum checkout) unlocks unlimited.
-- **Admin panel** — create, disable and delete school accounts.
+- **Student portal** — Dashboard (with school assignments), Practice, Study Plan, Results, Analytics, Question Bank, Vocabulary, Subscription, Settings.
+- **Bluebook-style exam** — 2 adaptive modules per section, timer, navigator, mark for review, answer eliminator, highlighter, reference sheet, Desmos, grid-in answers, break screen, autosave/resume.
+- **School portal (B2B and government schools)** — Overview, Students (add one or import a list, issue logins, reset passwords), Classes (skills heatmap), Assignments (mocks, section tests, practice sets, vocabulary; completion tracked automatically), Results (distribution, at-risk students), Teachers (logins scoped to their classes), Reports (CSV + printable summary), Settings (licence seats).
+- **Government network portal (B2G)** — National overview with a map of Uzbekistan's 14 regions, Regions, Schools (open any school's dashboard read-only), Talent pool with shortlist, national Mock days reaching every school, Reports, school account management.
+- **Admin panel** — create private schools, government schools and networks with their administrator login; manage, reset and disable logins.
+
+Everything is connected: a director adds a student → the student signs in and sets a password → sees the assignment → takes it → the director, teacher and network see the result.
+
+## Demo data
+
+All content is placeholder data generated in the browser: 190 original SAT-style questions, 112 vocabulary words, 42 government schools (3 per region) and 1 private school with about 4,900 generated students. Real activity by demo accounts is stored in the browser (localStorage), so each device starts from the same demo state.
 
 ## Run locally
 

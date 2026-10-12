@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, CalendarDays, Check, Flame, PenLine, Sparkles, Target } from 'lucide-react'
+import { ArrowRight, CalendarDays, Check, ClipboardList, Flame, PenLine, Sparkles, Target } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarList, Ring } from '../../components/Charts'
 import { wordByName } from '../../data/vocab'
 import { daysUntil, fmtDate, fullAttempts, predictedScore, skillStats, weakestSkills } from '../../lib/analytics'
-import { ensureDailyWords, setWordStatus, streak, usage, useSession } from '../../lib/store'
+import { ensureDailyWords, orgOf, setWordStatus, streak, usage, useAppState, useSession } from '../../lib/store'
+import { appliesTo, assignmentHref, assignmentLabel, assignmentStatus, assignmentsForSchool, fmtDue, realStudent } from '../../lib/school'
 
 const greeting = () => {
   const h = new Date().getHours()
@@ -64,6 +65,8 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <SchoolAssignments />
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Link to="/app/practice" className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky to-sky-deep p-6 text-white dark:from-sky-soft dark:to-elevated dark:text-ink">
           <PenLine size={22} />
@@ -90,12 +93,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-lg font-semibold">Today's words</div>
-              <div className="text-sm text-muted">{u.dailyWords} new words every day</div>
+              <div className="text-sm text-muted">{u.dailyWords} new words every day{words.length > 5 ? ` · showing 5 of ${words.length}` : ''}</div>
             </div>
             <Link to="/app/vocabulary" className="text-sm font-semibold text-sky">All words</Link>
           </div>
           <div className="mt-4 divide-y divide-line">
-            {words.map((w) => {
+            {words.slice(0, 5).map((w) => {
               const word = wordByName(w)
               if (!word) return null
               const learned = data.vocab.mastered.includes(w)
@@ -145,5 +148,57 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+function SchoolAssignments() {
+  const st = useAppState()
+  const { user, data } = useSession()
+  const org = orgOf(user, st)
+  if (!user || !org) return null
+  const me = realStudent(user, data)
+  const list = assignmentsForSchool(st, org)
+    .filter((a) => appliesTo(a, me))
+    .map((a) => ({ a, status: assignmentStatus(st, a, me) }))
+    .filter(({ a, status }) => !status.done || new Date(a.due).getTime() > Date.now() - 7 * 864e5)
+    .filter(({ a }) => new Date(a.due).getTime() > Date.now() - 14 * 864e5)
+    .sort((x, y) => Number(x.status.done) - Number(y.status.done) || x.a.due.localeCompare(y.a.due))
+  if (!list.length) return null
+  const daysLeft = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 864e5)
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ClipboardList size={18} className="text-sky" />
+          <div className="text-lg font-semibold">From {org.name}</div>
+        </div>
+        <div className="text-sm text-muted">{list.filter((x) => !x.status.done).length} to do</div>
+      </div>
+      <div className="mt-4 divide-y divide-line">
+        {list.map(({ a, status }) => {
+          const d = daysLeft(a.due)
+          const overdue = d < 0 && !status.done
+          return (
+            <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <div className="font-medium">{a.title}</div>
+                <div className={`text-xs ${overdue ? 'font-semibold text-bad' : 'text-muted'}`}>
+                  {assignmentLabel[a.type]} · {status.done ? 'Completed' : overdue ? `Overdue since ${fmtDue(a.due)}` : d === 0 ? 'Due today' : d === 1 ? 'Due tomorrow' : `Due ${fmtDue(a.due)} · ${d} days left`}
+                </div>
+              </div>
+              {status.done ? (
+                <span className="chip bg-good/15 text-good">
+                  <Check size={12} /> Done{status.score != null ? ` · ${status.score}${a.type === 'quick' || a.type === 'vocab' ? '%' : ''}` : ''}
+                </span>
+              ) : (
+                <Link to={assignmentHref(a)} className="btn-primary px-4 py-2 text-sm">
+                  {a.type === 'vocab' ? 'Study words' : 'Start'} <ArrowRight size={14} />
+                </Link>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </motion.div>
   )
 }

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BarChart3, BookA, CalendarCheck, ClipboardList, Crown, LayoutDashboard, Library, LogOut, Menu, PenLine, X } from 'lucide-react'
+import { BarChart3, BookA, CalendarCheck, ClipboardList, Crown, LayoutDashboard, Library, LogOut, Menu, PenLine, Settings, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
@@ -57,8 +57,11 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{user?.name}</div>
-            <div className="text-xs text-muted">{user?.plan === 'premium' ? 'Premium' : 'Free plan'}</div>
+            <div className="truncate text-xs text-muted">{user?.orgId ? 'Premium · school licence' : user?.plan === 'premium' ? 'Premium' : 'Free plan'}</div>
           </div>
+          <NavLink to="/app/settings" onClick={onNavigate} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-ink/5 hover:text-ink" aria-label="Settings" title="Settings">
+            <Settings size={16} />
+          </NavLink>
           <button
             onClick={() => {
               logout()
@@ -80,7 +83,7 @@ export default function PortalLayout() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   useEffect(() => touchActivity(), [])
-  const current = SECTIONS.find((s) => (s.end ? pathname === s.to : pathname.startsWith(s.to)))
+  const current = pathname === '/app/settings' ? { label: 'Settings' } : SECTIONS.find((s) => (s.end ? pathname === s.to : pathname.startsWith(s.to)))
   return (
     <div className="min-h-screen bg-surface">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-bg lg:block">

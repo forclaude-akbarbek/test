@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Crown, Minus, X } from 'lucide-react'
 import { useState } from 'react'
-import { FREE_LIMITS, PREMIUM_DAILY_WORDS, PRICES, updateProfile, usage, useSession } from '../../lib/store'
+import { FREE_LIMITS, PREMIUM_DAILY_WORDS, PRICES, orgOf, updateProfile, usage, useSession } from '../../lib/store'
 import { PageTitle } from './Layout'
 
 const ROWS: [string, string | boolean, string | boolean][] = [
@@ -24,6 +24,26 @@ export default function Subscription() {
     { label: 'AI study plans', used: u.plansUsed, max: FREE_LIMITS.plansPerMonth },
   ]
   const resetDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+  const school = orgOf(user)
+  if (school)
+    return (
+      <div className="space-y-6">
+        <PageTitle title="Subscription" sub="Your plan and what it includes." />
+        <div className="rounded-3xl bg-gradient-to-br from-sky to-sky-deep p-8 text-white dark:from-sky-soft dark:to-elevated dark:text-ink">
+          <div className="flex items-center gap-2 text-sm font-semibold opacity-90"><Crown size={16} /> School licence</div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">Premium</div>
+          <p className="mt-1 opacity-90">Provided by {school.name} until {new Date(school.licenseUntil).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Nothing to pay.</p>
+        </div>
+        <div className="card overflow-hidden">
+          {ROWS.map(([f, , b]) => (
+            <div key={f} className="flex items-center justify-between border-b border-line px-6 py-3.5 text-sm last:border-0">
+              <div>{f}</div>
+              <Cell v={b} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
 
   return (
     <div className="space-y-6">
